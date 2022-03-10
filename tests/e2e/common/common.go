@@ -244,7 +244,7 @@ func StatusTestOnInstallUpgrade(details VersionDetails, opts TestOptions) func(t
 				"dapr-operator":         {details.RuntimeVersion, "3"},
 			}
 		}
-
+		
 		lines := strings.Split(output, "\n")[1:] // remove header of status
 		t.Logf("dapr status -k infos: \n%s\n", lines)
 		for _, line := range lines {
@@ -408,8 +408,9 @@ func CheckWarningMessageForCertExpiry(details VersionDetails, opts TestOptions) 
 			"dapr-placement-server": {details.RuntimeVersion, "1"},
 			"dapr-operator":         {details.RuntimeVersion, "1"},
 		}
-		arr := strings.Split(output, "\n")
-		t.Log(arr)
+		ss := strings.Split(output, "\n")
+		s := ss[len(ss)-1]
+		t.Log(s)
 		lines := strings.Split(output, "\n")[:1] // remove header of status
 		t.Logf("dapr status -k infos: \n%s\n", lines)
 		for _, line := range lines {
