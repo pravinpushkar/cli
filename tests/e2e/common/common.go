@@ -385,6 +385,49 @@ func CRDTest(details VersionDetails, opts TestOptions) func(t *testing.T) {
 	}
 }
 
+func RenewCertificate(details VersionDetails) func(t *testing.T) {
+	return func(t *testing.T) {
+		daprPath := getDaprPath()
+		output, err := spawn.Command(daprPath, "mtls", "renew-certificate", "-k", "--restart")
+		t.Log(output)
+		require.NoError(t, err, "expected no error on certificate renewal")
+		assert.Contains(t, output, "Certificate rotation is successful!")
+	}
+}
+
+func CheckWarningMessageForCertExpiry(details VersionDetails, opts TestOptions) func(t *testing.T) {
+	return func(t *testing.T) {
+		daprPath := getDaprPath()
+		output, err := spawn.Command(daprPath, "status", "-k")
+		require.NoError(t, err, "status check failed")
+		var notFound map[string][]string
+		notFound = map[string][]string{
+			"dapr-sentry":           {details.RuntimeVersion, "1"},
+			"dapr-sidecar-injector": {details.RuntimeVersion, "1"},
+			"dapr-dashboard":        {details.DashboardVersion, "1"},
+			"dapr-placement-server": {details.RuntimeVersion, "1"},
+			"dapr-operator":         {details.RuntimeVersion, "1"},
+		}
+
+		lines := strings.Split(output, "\n")[1:] // remove header of status
+		t.Logf("dapr status -k infos: \n%s\n", lines)
+		for _, line := range lines {
+			cols := strings.Fields(strings.TrimSpace(line))
+			if len(cols) > 6 { // atleast 6 fields are verified from status (Age and created time are not)
+				if toVerify, ok := notFound[cols[0]]; ok { // get by name
+					require.Equal(t, DaprTestNamespace, cols[1], "namespace must match")
+					require.Equal(t, "True", cols[2], "healthly field must be true")
+					require.Equal(t, "Running", cols[3], "pods must be Running")
+					require.Equal(t, toVerify[1], cols[4], "replicas must be equal")
+					require.Equal(t, toVerify[0], cols[5], "versions must match")
+					//delete(notFound, cols[0])
+				}
+			}
+		}
+		assert.Empty(t, notFound)
+	}
+}
+
 // Unexported functions
 
 func (v VersionDetails) constructFoundMap(res Resource) map[string]bool {
