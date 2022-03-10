@@ -18,6 +18,7 @@ on:
     branches:
       - master
       - release-*
+      - runtest
     tags:
       - v*
   pull_request:

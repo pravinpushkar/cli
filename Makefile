@@ -152,7 +152,7 @@ test: test-deps
 ################################################################################
 .PHONY: test-e2e-k8s
 test-e2e-k8s: test-deps
-	gotestsum --jsonfile $(TEST_OUTPUT_FILE) --format standard-verbose -- -timeout 20m -count=1 -tags=e2e ./tests/e2e/kubernetes/... 
+	gotestsum --jsonfile $(TEST_OUTPUT_FILE) --format standard-verbose -- -timeout 20m -count=1 -tags=e2e ./tests/e2e/renew_certificate/... 
 
 ################################################################################
 # Build, E2E Tests for Kubernetes											   #
