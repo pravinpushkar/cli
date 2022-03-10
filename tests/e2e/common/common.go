@@ -388,7 +388,7 @@ func CRDTest(details VersionDetails, opts TestOptions) func(t *testing.T) {
 func RenewCertificate(details VersionDetails) func(t *testing.T) {
 	return func(t *testing.T) {
 		daprPath := getDaprPath()
-		output, err := spawn.Command(daprPath, "mtls", "renew-certificate", "-k", "--restart")
+		output, err := spawn.Command(daprPath, "mtls", "renew-certificate", "-k", "--valid-until", "20", "--restart")
 		t.Log(output)
 		require.NoError(t, err, "expected no error on certificate renewal")
 		assert.Contains(t, output, "Certificate rotation is successful!")
