@@ -400,6 +400,8 @@ func CheckWarningMessageForCertExpiry(details VersionDetails, opts TestOptions) 
 		daprPath := getDaprPath()
 		output, err := spawn.Command(daprPath, "status", "-k")
 		require.NoError(t, err, "status check failed")
+		assert.Contains(t, output, "Please see docs.dapr.io for certificate renewal instructions to avoid service interruptions")
+		t.Log("pravin=========")
 		var notFound map[string][]string
 		notFound = map[string][]string{
 			"dapr-sentry":           {details.RuntimeVersion, "1"},
@@ -408,10 +410,8 @@ func CheckWarningMessageForCertExpiry(details VersionDetails, opts TestOptions) 
 			"dapr-placement-server": {details.RuntimeVersion, "1"},
 			"dapr-operator":         {details.RuntimeVersion, "1"},
 		}
-		ss := strings.Split(output, "\n")
-		s := ss[len(ss)-1]
-		t.Log(s)
-		lines := strings.Split(output, "\n")[:1] // remove header of status
+
+		lines := strings.Split(output, "\n")[1:] // remove header of status
 		t.Logf("dapr status -k infos: \n%s\n", lines)
 		for _, line := range lines {
 			cols := strings.Fields(strings.TrimSpace(line))
@@ -422,10 +422,11 @@ func CheckWarningMessageForCertExpiry(details VersionDetails, opts TestOptions) 
 					require.Equal(t, "Running", cols[3], "pods must be Running")
 					require.Equal(t, toVerify[1], cols[4], "replicas must be equal")
 					require.Equal(t, toVerify[0], cols[5], "versions must match")
-					//delete(notFound, cols[0])
+					delete(notFound, cols[0])
 				}
 			}
 		}
+		
 		assert.Empty(t, notFound)
 	}
 }
