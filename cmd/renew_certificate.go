@@ -35,17 +35,17 @@ var (
 )
 
 var RenewCertificateCmd = &cobra.Command{
-	Use:   "renew-cert",
+	Use:   "renew-certificate",
 	Short: "Rotates Dapr root certificate of your kubernetes cluster",
 	Example: `
 # Generates new root and issuer certificates for kubernetest cluster
-dapr mtls renew-cert -k --valid-until <no of days> --restart true
+dapr mtls renew-certificate -k --valid-until <no of days> --restart true
 
 # Uses existing private root.key to generate new root and issuer certificates for kubernetest cluster
-dapr mtls renew-cert -k --certificate-password-file myprivatekey.key --valid-until <no of days> --restart true
+dapr mtls renew-certificate -k --certificate-password-file myprivatekey.key --valid-until <no of days> --restart true
 
 # Rotates certificate of your kubernetes cluster with provided ca.cert, issuer.crt and issuer.key file path
-dapr mtls renew-cert -k --ca-root-certificate <ca.crt> --issuer-private-key <issuer.key> --issuer-public-certificate <issuer.crt> --restart true
+dapr mtls renew-certificate -k --ca-root-certificate <ca.crt> --issuer-private-key <issuer.key> --issuer-public-certificate <issuer.crt> --restart true
 
 # See more at: https://docs.dapr.io/getting-started/
 `,
@@ -112,11 +112,11 @@ func restartControlPlaneService(names ...string) error {
 		print.InfoStatusEvent(os.Stdout, fmt.Sprintf("Restarting %s..", name))
 		_, err := utils.RunCmdAndWait("kubectl", "rollout", "restart", name, "-n", "dapr-system")
 		if err != nil {
-			return err
+			return fmt.Errorf("error in restarting deployment %s. Error is %w", name, err)
 		}
 		_, err = utils.RunCmdAndWait("kubectl", "rollout", "status", name, "-n", "dapr-system")
 		if err != nil {
-			return err
+			return fmt.Errorf("error in checking status for deployment %s. Error is %w", name, err)
 		}
 	}
 	print.SuccessStatusEvent(os.Stdout, "All control plane services have restarted successfully!")
@@ -131,4 +131,5 @@ func init() {
 	RenewCertificateCmd.Flags().StringVarP(&issuerPublicCertificateFile, "issuer-public-certificate", "", "", "The version of the Dapr runtime to upgrade or downgrade to, for example: 1.0.0")
 	RenewCertificateCmd.Flags().IntVarP(&validUntil, "valid-until", "", 365, "Max days before certificate expires")
 	RenewCertificateCmd.Flags().BoolVarP(&restartDaprServices, "restart", "", false, "Restart Dapr control plane services")
+	RenewCertificateCmd.MarkFlagRequired("kubernetes")
 }
