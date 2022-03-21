@@ -290,7 +290,6 @@ func runZipkin(wg *sync.WaitGroup, errorChan chan<- error, dir, version string, 
 		if imageRegistryURL != "" {
 			imageName = fmt.Sprintf("%s/%s", imageRegistryURL, imageName)
 		}
-		print.InfoStatusEvent(os.Stdout, fmt.Sprintf("pravin zipkin %s", imageName))
 		args = append(args,
 			"run",
 			"--name", zipkinContainerName,
@@ -353,7 +352,7 @@ func runRedis(wg *sync.WaitGroup, errorChan chan<- error, dir, version string, d
 		if imageRegistryURL != "" {
 			imageName = fmt.Sprintf("%s/%s", imageRegistryURL, imageName)
 		}
-		print.InfoStatusEvent(os.Stdout, fmt.Sprintf("pravin redis %s", imageName))
+
 		args = append(args,
 			"run",
 			"--name", redisContainerName,
@@ -445,15 +444,13 @@ func runPlacementService(wg *sync.WaitGroup, errorChan chan<- error, dir, versio
 	placementContainerName := utils.CreateContainerName(DaprPlacementContainerName, dockerNetwork)
 
 	var image string
+	var needFallbackImage bool
 	if defaultImageRegistryName == githubContainerRegistryName {
 		image = fmt.Sprintf("%s:%s", daprGhcrImageName, version)
-		if imageRegistryURL == "" {
-			imageRegistryURL = ghcrURL
-		}
-	} else if defaultImageRegistryName == dockerContainerRegistryName {
+		image, needFallbackImage = isImageExistsInGHCR(image, imageRegistryURL)
+	}
+	if defaultImageRegistryName == dockerContainerRegistryName || needFallbackImage {
 		image = fmt.Sprintf("%s:%s", daprDockerImageName, version)
-		fmt.Println(image)
-		fmt.Println(imageRegistryURL)
 	}
 	if imageRegistryURL != "" {
 		image = fmt.Sprintf("%s/%s", imageRegistryURL, image)
@@ -994,4 +991,21 @@ func getDefaultRegistry() string {
 		}
 	}
 	return imageRegistryName
+}
+
+func isImageExistsInGHCR(imageName, imageRegistryName string) (string, bool) {
+	if imageRegistryName != "" {
+		return "", !true
+	}
+	imageName = fmt.Sprintf("%s/%s", ghcrURL, imageName)
+	args := []string{
+		"image",
+		"inspect",
+		imageName,
+	}
+	_, err := utils.RunCmdAndWait("docker", args...)
+	if err != nil {
+		return "", !false
+	}
+	return imageName, !true
 }
