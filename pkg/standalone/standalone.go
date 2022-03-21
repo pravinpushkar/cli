@@ -61,6 +61,17 @@ const (
 	errInstallTemplate = "please run `dapr uninstall` first before running `dapr init`"
 )
 
+const (
+	githubContainerRegistryName = "ghcr"
+	ghcrURL                     = "ghcr.io/dapr"
+	daprGhcrImageName           = "dapr"
+	dockerContainerRegistryName = "dockerhub"
+	redisGhcrImageName          = "3rdparty/redis"
+	zipkinGhcrImageName         = "3rdparty/zipkin"
+)
+
+var defaultImageRegistryName string
+
 type configuration struct {
 	APIVersion string `yaml:"apiVersion"`
 	Kind       string `yaml:"kind"`
@@ -107,8 +118,13 @@ func isBinaryInstallationRequired(binaryFilePrefix, installDir string) (bool, er
 	return true, nil
 }
 
+func init() {
+	defaultImageRegistryName = getDefaultRegistry()
+	print.InfoStatusEvent(os.Stdout, fmt.Sprintf("Pulling images from %s", defaultImageRegistryName))
+}
+
 // Init installs Dapr on a local machine using the supplied runtimeVersion.
-func Init(runtimeVersion, dashboardVersion string, dockerNetwork string, slimMode bool, imageRepositoryURL string) error {
+func Init(runtimeVersion, dashboardVersion string, dockerNetwork string, slimMode bool, imageRegistryURL string) error {
 	if !slimMode {
 		dockerInstalled := utils.IsDockerInstalled()
 		if !dockerInstalled {
@@ -191,7 +207,7 @@ func Init(runtimeVersion, dashboardVersion string, dockerNetwork string, slimMod
 
 	for _, step := range initSteps {
 		// Run init on the configurations and containers.
-		go step(&wg, errorChan, daprBinDir, runtimeVersion, dockerNetwork, imageRepositoryURL)
+		go step(&wg, errorChan, daprBinDir, runtimeVersion, dockerNetwork, imageRegistryURL)
 	}
 
 	go func() {
@@ -244,7 +260,7 @@ func prepareDaprInstallDir(daprBinDir string) error {
 	return nil
 }
 
-func runZipkin(wg *sync.WaitGroup, errorChan chan<- error, dir, version string, dockerNetwork string, imageRepositoryURL string) {
+func runZipkin(wg *sync.WaitGroup, errorChan chan<- error, dir, version string, dockerNetwork string, imageRegistryURL string) {
 	defer wg.Done()
 
 	zipkinContainerName := utils.CreateContainerName(DaprZipkinContainerName, dockerNetwork)
@@ -256,14 +272,25 @@ func runZipkin(wg *sync.WaitGroup, errorChan chan<- error, dir, version string, 
 	}
 	args := []string{}
 
+	var imageName string
+
 	if exists {
 		// do not create container again if it exists.
 		args = append(args, "start", zipkinContainerName)
 	} else {
-		imageName := zipkinDockerImageName
-		if imageRepositoryURL != "" {
-			imageName = fmt.Sprintf("%s/%s", imageRepositoryURL, imageName)
+		if defaultImageRegistryName == githubContainerRegistryName {
+			imageName = zipkinGhcrImageName
+			if imageRegistryURL == "" {
+				imageRegistryURL = ghcrURL
+			}
+		} else if defaultImageRegistryName == dockerContainerRegistryName {
+			imageName = zipkinDockerImageName
 		}
+
+		if imageRegistryURL != "" {
+			imageName = fmt.Sprintf("%s/%s", imageRegistryURL, imageName)
+		}
+		print.InfoStatusEvent(os.Stdout, fmt.Sprintf("pravin zipkin %s", imageName))
 		args = append(args,
 			"run",
 			"--name", zipkinContainerName,
@@ -298,7 +325,7 @@ func runZipkin(wg *sync.WaitGroup, errorChan chan<- error, dir, version string, 
 	errorChan <- nil
 }
 
-func runRedis(wg *sync.WaitGroup, errorChan chan<- error, dir, version string, dockerNetwork string, imageRepositoryURL string) {
+func runRedis(wg *sync.WaitGroup, errorChan chan<- error, dir, version string, dockerNetwork string, imageRegistryURL string) {
 	defer wg.Done()
 	redisContainerName := utils.CreateContainerName(DaprRedisContainerName, dockerNetwork)
 
@@ -309,14 +336,24 @@ func runRedis(wg *sync.WaitGroup, errorChan chan<- error, dir, version string, d
 	}
 	args := []string{}
 
+	var imageName string
 	if exists {
 		// do not create container again if it exists.
 		args = append(args, "start", redisContainerName)
 	} else {
-		imageName := redisDockerImageName
-		if imageRepositoryURL != "" {
-			imageName = fmt.Sprintf("%s/%s", imageRepositoryURL, imageName)
+		if defaultImageRegistryName == githubContainerRegistryName {
+			imageName = redisGhcrImageName
+			if imageRegistryURL == "" {
+				imageRegistryURL = ghcrURL
+			}
+		} else if defaultImageRegistryName == dockerContainerRegistryName {
+			imageName = redisDockerImageName
 		}
+
+		if imageRegistryURL != "" {
+			imageName = fmt.Sprintf("%s/%s", imageRegistryURL, imageName)
+		}
+		print.InfoStatusEvent(os.Stdout, fmt.Sprintf("pravin redis %s", imageName))
 		args = append(args,
 			"run",
 			"--name", redisContainerName,
@@ -403,13 +440,23 @@ func isContainerRunError(err error) bool {
 	return false
 }
 
-func runPlacementService(wg *sync.WaitGroup, errorChan chan<- error, dir, version string, dockerNetwork string, imageRepositoryURL string) {
+func runPlacementService(wg *sync.WaitGroup, errorChan chan<- error, dir, version string, dockerNetwork string, imageRegistryURL string) {
 	defer wg.Done()
 	placementContainerName := utils.CreateContainerName(DaprPlacementContainerName, dockerNetwork)
 
-	image := fmt.Sprintf("%s:%s", daprDockerImageName, version)
-	if imageRepositoryURL != "" {
-		image = fmt.Sprintf("%s/%s", imageRepositoryURL, image)
+	var image string
+	if defaultImageRegistryName == githubContainerRegistryName {
+		image = fmt.Sprintf("%s:%s", daprGhcrImageName, version)
+		if imageRegistryURL == "" {
+			imageRegistryURL = ghcrURL
+		}
+	} else if defaultImageRegistryName == dockerContainerRegistryName {
+		image = fmt.Sprintf("%s:%s", daprDockerImageName, version)
+		fmt.Println(image)
+		fmt.Println(imageRegistryURL)
+	}
+	if imageRegistryURL != "" {
+		image = fmt.Sprintf("%s/%s", imageRegistryURL, image)
 	}
 
 	// Use only image for latest version.
@@ -930,4 +977,21 @@ func checkAndOverWriteFile(filePath string, b []byte) error {
 		}
 	}
 	return nil
+}
+
+func getDefaultRegistry() string {
+	imageRegistryName := githubContainerRegistryName
+	if val := os.Getenv("DEFAULT_IMAGE_REGISTRY"); val != "" {
+		switch strings.ToLower(val) {
+		case githubContainerRegistryName:
+			imageRegistryName = githubContainerRegistryName
+		case dockerContainerRegistryName:
+			imageRegistryName = dockerContainerRegistryName
+		default:
+			print.FailureStatusEvent(os.Stdout,
+				fmt.Sprintf("Environment varibale %s can only be set to %s and %s", "DEFAULT_IMAGE_REGISTRY", "GHCR", "DOCKERHUB"))
+			os.Exit(1)
+		}
+	}
+	return imageRegistryName
 }
