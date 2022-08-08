@@ -64,10 +64,9 @@ jobs:
       - name: Install docker - MacOS
         if: matrix.os == 'macos-10.15'
         run: |
-          brew install --cask docker
-          sudo /Applications/Docker.app/Contents/MacOS/Docker --unattended --install-privileged-components
-          open -a /Applications/Docker.app --args --unattended --accept-license
-          while ! /Applications/Docker.app/Contents/Resources/bin/docker info &>/dev/null; do sleep 1; done
+          brew install docker docker-compose
+          mkdir -p ~/.docker/cli-plugins
+          ln -sfn /opt/homebrew/opt/docker-compose/bin/docker-compose ~/.docker/cli-plugins/docker-compose
           docker --version
       - name: Determine latest Dapr Runtime version including Pre-releases
         if: github.base_ref == 'master'
