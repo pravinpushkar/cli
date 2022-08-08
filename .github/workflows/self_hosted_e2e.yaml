@@ -64,9 +64,10 @@ jobs:
       - name: Install docker - MacOS
         if: matrix.os == 'macos-10.15'
         run: |
-          brew install docker docker-compose
-          mkdir -p ~/.docker/cli-plugins
-          ln -sfn /opt/homebrew/opt/docker-compose/bin/docker-compose ~/.docker/cli-plugins/docker-compose
+          wget https://desktop.docker.com/mac/main/amd64/Docker.dmg?utm_source=docker&utm_medium=webreferral&utm_campaign=docs-driven-download-mac-amd64
+          sudo hdiutil attach Docker.dmg
+          sudo /Volumes/Docker/Docker.app/Contents/MacOS/install --accept-license
+          sudo hdiutil detach /Volumes/Docker
           docker --version
       - name: Determine latest Dapr Runtime version including Pre-releases
         if: github.base_ref == 'master'
