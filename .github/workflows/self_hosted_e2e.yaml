@@ -64,7 +64,7 @@ jobs:
       - name: Install docker - MacOS
         if: matrix.os == 'macos-10.15'
         run: |
-          wget https://desktop.docker.com/mac/main/amd64/Docker.dmg?utm_source=docker&utm_medium=webreferral&utm_campaign=docs-driven-download-mac-amd64
+          wget https://desktop.docker.com/mac/main/amd64/Docker.dmg
           sudo hdiutil attach Docker.dmg
           sudo /Volumes/Docker/Docker.app/Contents/MacOS/install --accept-license
           sudo hdiutil detach /Volumes/Docker
