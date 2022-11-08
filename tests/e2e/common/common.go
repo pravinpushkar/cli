@@ -284,13 +284,6 @@ func StatusTestOnInstallUpgrade(details VersionDetails, opts TestOptions) func(t
 			}
 		}
 
-		if details.ImageVariant != "" {
-			notFound["dapr-sentry"][0] = notFound["dapr-sentry"][0] + "-" + details.ImageVariant
-			notFound["dapr-sidecar-injector"][0] = notFound["dapr-sidecar-injector"][0] + "-" + details.ImageVariant
-			notFound["dapr-placement-server"][0] = notFound["dapr-placement-server"][0] + "-" + details.ImageVariant
-			notFound["dapr-operator"][0] = notFound["dapr-operator"][0] + "-" + details.ImageVariant
-		}
-
 		lines := strings.Split(output, "\n")[1:] // remove header of status.
 		t.Logf("dapr status -k infos: \n%s\n", lines)
 		for _, line := range lines {
@@ -302,6 +295,10 @@ func StatusTestOnInstallUpgrade(details VersionDetails, opts TestOptions) func(t
 					require.Equal(t, "Running", cols[3], "pods must be Running")
 					require.Equal(t, toVerify[1], cols[4], "replicas must be equal")
 					require.Equal(t, toVerify[0], cols[5], "versions must match")
+					if details.ImageVariant != "" && cols[0] != "dapr-dashboard" {
+						require.Equal(t, details.ImageVariant, cols[6], "image variant must match")
+					}
+					require.Equal(t, details.ImageVariant, cols[6], "image variant must match")
 					delete(notFound, cols[0])
 				}
 			}

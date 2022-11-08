@@ -101,7 +101,7 @@ func (s *StatusClient) Status() ([]StatusOutput, error) {
 			imageVariant := ""
 			if strings.Contains(version, "-") {
 				imageVariant = version[strings.Index(version, "-")+1:]
-				version = version[:strings.Index(version, "-")]
+				version = version[:strings.Index(version, "-")] //nolint
 			}
 
 			status := ""
