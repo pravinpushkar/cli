@@ -295,6 +295,11 @@ func StatusTestOnInstallUpgrade(details VersionDetails, opts TestOptions) func(t
 					require.Equal(t, "Running", cols[3], "pods must be Running")
 					require.Equal(t, toVerify[1], cols[4], "replicas must be equal")
 					require.Equal(t, toVerify[0], cols[5], "versions must match")
+					// TODO: remove check cols[0] != "dapr-dashboard", once dashboard mariner image is available.
+					fmt.Println("================")
+					fmt.Println(details.ImageVariant)
+					fmt.Println(cols[0])
+					fmt.Println("=================")
 					if details.ImageVariant != "" && cols[0] != "dapr-dashboard" {
 						require.Equal(t, details.ImageVariant, cols[6], "image variant must match")
 					}
