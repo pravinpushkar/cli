@@ -303,7 +303,6 @@ func StatusTestOnInstallUpgrade(details VersionDetails, opts TestOptions) func(t
 					if details.ImageVariant != "" && cols[0] != "dapr-dashboard" {
 						require.Equal(t, details.ImageVariant, cols[6], "image variant must match")
 					}
-					require.Equal(t, details.ImageVariant, cols[6], "image variant must match")
 					delete(notFound, cols[0])
 				}
 			}
