@@ -38,6 +38,7 @@ type ListOutput struct {
 	Age                string `csv:"AGE"       json:"age"                yaml:"age"`
 	Created            string `csv:"CREATED"   json:"created"            yaml:"created"`
 	DaprdPID           int    `csv:"DAPRD PID" json:"daprdPid"           yaml:"daprdPid"`
+	AppPID             int    `csv:"APP PID"   json:"appPid"             yaml:"appPid"`
 	CliPID             int    `csv:"CLI PID"   json:"cliPid"             yaml:"cliPid"`
 	MaxRequestBodySize int    `csv:"-"         json:"maxRequestBodySize" yaml:"maxRequestBodySize"` // Additional field, not displayed in table.
 	HTTPReadBufferSize int    `csv:"-"         json:"httpReadBufferSize" yaml:"httpReadBufferSize"` // Additional field, not displayed in table.
@@ -129,6 +130,7 @@ func List() ([]ListOutput, error) {
 				Age:                age.GetAge(createTime),
 				DaprdPID:           daprPID,
 				CliPID:             cliPID,
+				AppPID:             int(getAppPID(cliPID, appCmd)),
 				AppID:              appID,
 				HTTPPort:           httpPort,
 				GRPCPort:           grpcPort,
@@ -172,4 +174,20 @@ func GetCLiPIDCountMap() map[int]int {
 		cliPIDCountMap[app.CliPID]++
 	}
 	return cliPIDCountMap
+}
+
+// getAppPID returns the PID of the app process.
+func getAppPID(cliPID int, appCmd string) int32 {
+	procDetails, _ := process.NewProcess(int32(cliPID))
+	chProcesses, _ := procDetails.Children()
+	for _, proc := range chProcesses {
+		cmdLine, err := proc.Cmdline()
+		if err != nil {
+			continue
+		}
+		if strings.Contains(cmdLine, appCmd) {
+			return proc.Pid
+		}
+	}
+	return 0
 }
