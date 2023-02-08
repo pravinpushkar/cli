@@ -329,7 +329,10 @@ func StatusTestOnInstallUpgrade(details VersionDetails, opts TestOptions) func(t
 					require.Equal(t, "True", cols[2], "healthly field must be true")
 					require.Equal(t, "Running", cols[3], "pods must be Running")
 					require.Equal(t, toVerify[1], cols[4], "replicas must be equal")
-					require.Equal(t, toVerify[0], cols[5], "versions must match")
+					// Skip checking dashboard's version until charts are updated.
+					if cols[0] != "dapr-dashboard" {
+						require.Equal(t, toVerify[0], cols[5], "versions must match")
+					}
 					delete(notFound, cols[0])
 				}
 			}
@@ -708,7 +711,7 @@ func installTest(details VersionDetails, opts TestOptions) func(t *testing.T) {
 			"--log-as-json",
 		}
 		if !details.UseDaprLatestVersion {
-			args = append(args, "--runtime-version", details.RuntimeVersion, "--dashboard-version", details.DashboardVersion)
+			args = append(args, "--runtime-version", details.RuntimeVersion)
 		}
 		if opts.HAEnabled {
 			args = append(args, "--enable-ha")
