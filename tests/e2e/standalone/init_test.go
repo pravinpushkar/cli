@@ -45,6 +45,7 @@ func TestStandaloneInit(t *testing.T) {
 		must(t, cmdUninstall, "failed to uninstall Dapr")
 		args := []string{
 			"--runtime-version", daprRuntimeVersion,
+			"--dashboard-version", daprDashboardVersion,
 			"--image-registry", "smplregistry.io/owner",
 		}
 		output, err := cmdInit(args...)
@@ -61,6 +62,7 @@ func TestStandaloneInit(t *testing.T) {
 		must(t, cmdUninstall, "failed to uninstall Dapr")
 		args := []string{
 			"--runtime-version", daprRuntimeVersion,
+			"--dashboard-version", daprDashboardVersion,
 			"--image-registry", "localhost:5000",
 			"--from-dir", "./local-dir",
 		}
@@ -74,6 +76,7 @@ func TestStandaloneInit(t *testing.T) {
 		must(t, cmdUninstall, "failed to uninstall Dapr")
 		args := []string{
 			"--runtime-version", daprRuntimeVersion,
+			"--dashboard-version", daprDashboardVersion,
 			"--container-runtime", "invalid",
 		}
 		output, err := cmdInit(args...)
@@ -87,6 +90,7 @@ func TestStandaloneInit(t *testing.T) {
 
 		args := []string{
 			"--runtime-version", daprRuntimeVersion,
+			"--dashboard-version", daprDashboardVersion,
 		}
 		output, err := cmdInit(args...)
 		t.Log(output)
@@ -110,6 +114,7 @@ func TestStandaloneInit(t *testing.T) {
 
 		args := []string{
 			"--runtime-version", daprRuntimeVersion,
+			"--dashboard-version", daprDashboardVersion,
 			"--image-variant", "mariner",
 		}
 		output, err := cmdInit(args...)
