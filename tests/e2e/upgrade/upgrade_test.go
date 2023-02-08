@@ -161,7 +161,9 @@ func TestUpgradePathNonHAModeMTLSDisabled(t *testing.T) {
 	}
 
 	for _, p := range supportedUpgradePaths {
+		p := p
 		t.Run(fmt.Sprintf("v%s to v%s", p.previous.RuntimeVersion, p.next.RuntimeVersion), func(t *testing.T) {
+			t.Parallel()
 			installOpts := common.TestOptions{
 				HAEnabled:             false,
 				MTLSEnabled:           false,
@@ -204,7 +206,9 @@ func TestUpgradePathNonHAModeMTLSEnabled(t *testing.T) {
 	}
 
 	for _, p := range supportedUpgradePaths {
+		p := p
 		t.Run(fmt.Sprintf("v%s to v%s", p.previous.RuntimeVersion, p.next.RuntimeVersion), func(t *testing.T) {
+			t.Parallel()
 			installOpts := common.TestOptions{
 				HAEnabled:             false,
 				MTLSEnabled:           true,
@@ -247,7 +251,9 @@ func TestUpgradePathHAModeMTLSDisabled(t *testing.T) {
 	}
 
 	for _, p := range supportedUpgradePaths {
+		p := p
 		t.Run(fmt.Sprintf("v%s to v%s", p.previous.RuntimeVersion, p.next.RuntimeVersion), func(t *testing.T) {
+			t.Parallel()
 			installOpts := common.TestOptions{
 				HAEnabled:             true,
 				MTLSEnabled:           false,
@@ -290,7 +296,9 @@ func TestUpgradePathHAModeMTLSEnabled(t *testing.T) {
 	}
 
 	for _, p := range supportedUpgradePaths {
+		p := p
 		t.Run(fmt.Sprintf("v%s to v%s", p.previous.RuntimeVersion, p.next.RuntimeVersion), func(t *testing.T) {
+			t.Parallel()
 			installOpts := common.TestOptions{
 				HAEnabled:             true,
 				MTLSEnabled:           true,
