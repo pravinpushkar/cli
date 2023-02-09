@@ -166,7 +166,7 @@ func DeleteCRD(crds []string) func(*testing.T) {
 
 func GetTestsOnInstall(details VersionDetails, opts TestOptions) []TestCase {
 	return []TestCase{
-		{"install " + details.RuntimeVersion, installTest(details, opts)},
+		{"install " + details.RuntimeVersion, InstallTest(details, opts)},
 		{"crds exist " + details.RuntimeVersion, CRDTest(details, opts)},
 		{"clusterroles exist " + details.RuntimeVersion, ClusterRolesTest(details, opts)},
 		{"clusterrolebindings exist " + details.RuntimeVersion, ClusterRoleBindingsTest(details, opts)},
@@ -176,10 +176,32 @@ func GetTestsOnInstall(details VersionDetails, opts TestOptions) []TestCase {
 	}
 }
 
+func GetTestsAfterInstall(details VersionDetails, opts TestOptions) []TestCase {
+	return []TestCase{
+		{"crds exist " + details.RuntimeVersion, CRDTest(details, opts)},
+		{"clusterroles exist " + details.RuntimeVersion, ClusterRolesTest(details, opts)},
+		{"clusterrolebindings exist " + details.RuntimeVersion, ClusterRoleBindingsTest(details, opts)},
+		{"apply and check components exist " + details.RuntimeVersion, ComponentsTestOnInstallUpgrade(opts)},
+		{"check mtls " + details.RuntimeVersion, MTLSTestOnInstallUpgrade(opts)},
+		{"status check " + details.RuntimeVersion, StatusTestOnInstallUpgrade(details, opts)},
+	}
+}
+
+func GetTestsAfterUninstall(details VersionDetails, opts TestOptions) []TestCase {
+	return []TestCase{
+		{"crds exist on uninstall " + details.RuntimeVersion, CRDTest(details, opts)},
+		{"clusterroles not exist " + details.RuntimeVersion, ClusterRolesTest(details, opts)},
+		{"clusterrolebindings not exist " + details.RuntimeVersion, ClusterRoleBindingsTest(details, opts)},
+		{"check components exist on uninstall " + details.RuntimeVersion, componentsTestOnUninstall(opts.UninstallAll)},
+		{"check mtls error " + details.RuntimeVersion, uninstallMTLSTest()},
+		{"check status error " + details.RuntimeVersion, statusTestOnUninstall()},
+	}
+}
+
 func GetTestsOnUninstall(details VersionDetails, opts TestOptions) []TestCase {
 	return []TestCase{
-		{"uninstall " + details.RuntimeVersion, uninstallTest(opts.UninstallAll)}, // waits for pod deletion.
-		{"cluster not exist", kubernetesTestOnUninstall()},
+		{"uninstall " + details.RuntimeVersion, UninstallTest(opts.UninstallAll)}, // waits for pod deletion.
+		{"cluster not exist", KubernetesTestOnUninstall()},
 		{"crds exist on uninstall " + details.RuntimeVersion, CRDTest(details, opts)},
 		{"clusterroles not exist " + details.RuntimeVersion, ClusterRolesTest(details, opts)},
 		{"clusterrolebindings not exist " + details.RuntimeVersion, ClusterRoleBindingsTest(details, opts)},
@@ -221,6 +243,7 @@ func GetTestsPostCertificateRenewal(details VersionDetails, opts TestOptions) []
 
 func MTLSTestOnInstallUpgrade(opts TestOptions) func(t *testing.T) {
 	return func(t *testing.T) {
+		t.Parallel()
 		daprPath := GetDaprPath()
 		output, err := spawn.Command(daprPath, "mtls", "-k")
 		require.NoError(t, err, "expected no error on querying for mtls")
@@ -267,6 +290,7 @@ func MTLSTestOnInstallUpgrade(opts TestOptions) func(t *testing.T) {
 
 func ComponentsTestOnInstallUpgrade(opts TestOptions) func(t *testing.T) {
 	return func(t *testing.T) {
+		t.Parallel()
 		daprPath := GetDaprPath()
 		// if dapr is installed.
 		if opts.ApplyComponentChanges {
@@ -290,6 +314,7 @@ func ComponentsTestOnInstallUpgrade(opts TestOptions) func(t *testing.T) {
 
 func StatusTestOnInstallUpgrade(details VersionDetails, opts TestOptions) func(t *testing.T) {
 	return func(t *testing.T) {
+		t.Parallel()
 		daprPath := GetDaprPath()
 		output, err := spawn.Command(daprPath, "status", "-k")
 		require.NoError(t, err, "status check failed")
@@ -340,6 +365,7 @@ func StatusTestOnInstallUpgrade(details VersionDetails, opts TestOptions) func(t
 
 func ClusterRoleBindingsTest(details VersionDetails, opts TestOptions) func(t *testing.T) {
 	return func(t *testing.T) {
+		t.Parallel()
 		foundMap := details.constructFoundMap(ClusterRoleBindings)
 		wanted, ok := opts.CheckResourceExists[ClusterRoleBindings]
 		if !ok {
@@ -381,6 +407,7 @@ func ClusterRoleBindingsTest(details VersionDetails, opts TestOptions) func(t *t
 
 func ClusterRolesTest(details VersionDetails, opts TestOptions) func(t *testing.T) {
 	return func(t *testing.T) {
+		t.Parallel()
 		foundMap := details.constructFoundMap(ClusterRoles)
 		wanted, ok := opts.CheckResourceExists[ClusterRoles]
 		if !ok {
@@ -418,6 +445,7 @@ func ClusterRolesTest(details VersionDetails, opts TestOptions) func(t *testing.
 
 func CRDTest(details VersionDetails, opts TestOptions) func(t *testing.T) {
 	return func(t *testing.T) {
+		t.Parallel()
 		foundMap := details.constructFoundMap(CustomResourceDefs)
 		wanted, ok := opts.CheckResourceExists[CustomResourceDefs]
 		if !ok {
@@ -698,7 +726,7 @@ func getClient() (*k8s.Clientset, error) {
 	return k8s.NewForConfig(config)
 }
 
-func installTest(details VersionDetails, opts TestOptions) func(t *testing.T) {
+func InstallTest(details VersionDetails, opts TestOptions) func(t *testing.T) {
 	return func(t *testing.T) {
 		daprPath := GetDaprPath()
 		args := []string{
@@ -730,7 +758,7 @@ func installTest(details VersionDetails, opts TestOptions) func(t *testing.T) {
 	}
 }
 
-func uninstallTest(all bool) func(t *testing.T) {
+func UninstallTest(all bool) func(t *testing.T) {
 	return func(t *testing.T) {
 		output, err := EnsureUninstall(all)
 		t.Log(output)
@@ -752,7 +780,7 @@ func uninstallTest(all bool) func(t *testing.T) {
 	}
 }
 
-func kubernetesTestOnUninstall() func(t *testing.T) {
+func KubernetesTestOnUninstall() func(t *testing.T) {
 	return func(t *testing.T) {
 		_, err := EnsureUninstall(true)
 		require.NoError(t, err, "uninstall failed")
@@ -767,6 +795,7 @@ func kubernetesTestOnUninstall() func(t *testing.T) {
 
 func uninstallMTLSTest() func(t *testing.T) {
 	return func(t *testing.T) {
+		t.Parallel()
 		daprPath := GetDaprPath()
 		output, err := spawn.Command(daprPath, "mtls", "-k")
 		require.Error(t, err, "expected error to be return if dapr not installed")
@@ -776,6 +805,7 @@ func uninstallMTLSTest() func(t *testing.T) {
 
 func componentsTestOnUninstall(all bool) func(t *testing.T) {
 	return func(t *testing.T) {
+		t.Parallel()
 		daprPath := GetDaprPath()
 		// On Dapr uninstall CRDs are not removed, consequently the components will not be removed.
 		// TODO Related to https://github.com/dapr/cli/issues/656.
@@ -810,6 +840,7 @@ func componentsTestOnUninstall(all bool) func(t *testing.T) {
 
 func statusTestOnUninstall() func(t *testing.T) {
 	return func(t *testing.T) {
+		t.Parallel()
 		daprPath := GetDaprPath()
 		output, err := spawn.Command(daprPath, "status", "-k")
 		t.Log("checking status fails as expected")
