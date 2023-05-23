@@ -111,6 +111,7 @@ func UpgradeTest(details VersionDetails, opts TestOptions) func(t *testing.T) {
 		require.NoError(t, err, "failed to check if dashboard is included in dapr chart")
 
 		if !hasDashboardInDaprChart {
+			fmt.Println("Dashboard is not included in Dapr chart, So including dashboard version in upgrade command############")
 			args = append(args, "--dashboard-version", details.DashboardVersion)
 		}
 
@@ -304,6 +305,9 @@ func StatusTestOnInstallUpgrade(details VersionDetails, opts TestOptions) func(t
 	return func(t *testing.T) {
 		daprPath := GetDaprPath()
 		output, err := spawn.Command(daprPath, "status", "-k")
+		fmt.Println("status output: #####################")
+		fmt.Println(output)
+		fmt.Println("status output: #####################")
 		require.NoError(t, err, "status check failed")
 		var notFound map[string][]string
 		if !opts.HAEnabled {
