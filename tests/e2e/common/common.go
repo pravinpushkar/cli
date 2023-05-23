@@ -309,7 +309,7 @@ func StatusTestOnInstallUpgrade(details VersionDetails, opts TestOptions) func(t
 		fmt.Println(output)
 		fmt.Println("status output: #####################")
 		fmt.Println("####### placement logs#######")
-		placementLogs, _ := spawn.Command("kubectl", "logs", "-n", "dapr-system", "dapr-placement-server-0")
+		placementLogs, _ := spawn.Command("kubectl", "logs", "-n", "dapr-cli-tests", "dapr-placement-server-0")
 		fmt.Println(placementLogs)
 		fmt.Println("####### placement logs ends#######")
 		require.NoError(t, err, "status check failed")
@@ -887,6 +887,7 @@ func namespaceComponentOutputCheck(t *testing.T, fields []string, namespace stri
 }
 
 func validatePodsOnInstallUpgrade(t *testing.T, details VersionDetails) {
+	fmt.Println("Validating pods ######")
 	ctx := context.Background()
 	ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
@@ -954,6 +955,7 @@ func validatePodsOnInstallUpgrade(t *testing.T, details VersionDetails) {
 }
 
 func waitPodDeletion(t *testing.T, done, podsDeleted chan struct{}) {
+	fmt.Println("wait for pod s deletion ########")
 	for {
 		select {
 		case <-done: // if timeout was reached.
@@ -978,6 +980,7 @@ func waitPodDeletion(t *testing.T, done, podsDeleted chan struct{}) {
 }
 
 func waitAllPodsRunning(t *testing.T, namespace string, haEnabled bool, done, podsRunning chan struct{}) {
+	fmt.Println("wait for all pod s running ########")
 	for {
 		select {
 		case <-done: // if timeout was reached.
