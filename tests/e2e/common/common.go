@@ -308,6 +308,10 @@ func StatusTestOnInstallUpgrade(details VersionDetails, opts TestOptions) func(t
 		fmt.Println("status output: #####################")
 		fmt.Println(output)
 		fmt.Println("status output: #####################")
+		fmt.Println("####### placement logs#######")
+		placementLogs, _ := spawn.Command("kubectl", "logs", "-n", "dapr-system", "dapr-placement-server-0")
+		fmt.Println(placementLogs)
+		fmt.Println("####### placement logs ends#######")
 		require.NoError(t, err, "status check failed")
 		var notFound map[string][]string
 		if !opts.HAEnabled {
@@ -428,7 +432,9 @@ func ClusterRolesTest(details VersionDetails, opts TestOptions) func(t *testing.
 				break
 			}
 		}
-
+		fmt.Println("########### Cluster roles#####")
+		fmt.Println(foundMap)
+		fmt.Println("################")
 		for name, found := range foundMap {
 			assert.Equal(t, wanted, found, "cluster role %s, found = %t, wanted = %t", name, found, wanted)
 		}
