@@ -101,7 +101,7 @@ jobs:
         if: matrix.os == 'macos-latest' && matrix.dapr_install_mode == 'complete'
         run: |
           echo "checkout macos arch============"
-          uname -v
+          uname -m
           echo "checkout macos finished=========="
           # Install podman
           curl -sL -o podman.pkg https://github.com/containers/podman/releases/download/v${{ env.PODMAN_VERSION }}/podman-installer-macos-amd64.pkg
