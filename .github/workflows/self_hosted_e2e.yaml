@@ -42,7 +42,7 @@ jobs:
       DAPR_DASHBOARD_PINNED_VERSION: 0.13.0
       DAPR_RUNTIME_LATEST_STABLE_VERSION:
       DAPR_DASHBOARD_LATEST_STABLE_VERSION:
-      PODMAN_VERSION: 4.4.4
+      PODMAN_VERSION: 4.6.1
     strategy:
       # TODO: Remove this when our E2E tests are stable for podman on MacOS.
       fail-fast: false # Keep running if one leg fails.
@@ -102,6 +102,9 @@ jobs:
         timeout-minutes: 15
         if: matrix.os == 'macos-latest' && matrix.dapr_install_mode == 'complete'
         run: |
+          echo "checkout macos arch============"
+          uname -m
+          echo "checkout macos finished=========="
           # Install podman
           curl -sL -o podman.pkg https://github.com/containers/podman/releases/download/v${{ env.PODMAN_VERSION }}/podman-installer-macos-amd64.pkg
           sudo installer -pkg podman.pkg -target /
